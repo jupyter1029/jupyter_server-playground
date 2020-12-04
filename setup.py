@@ -53,7 +53,7 @@ setup_args = dict(
     extras_require = {
         'test': ['coverage', 'requests',
                  'pytest', 'pytest-cov', 'pytest-jupyter',
-                 'pytest-console-scripts', 'ipykernel'],
+                 'pytest-console-scripts', 'ipykernel', 'requests-unixsocket'],
     },
     python_requires = '>=3.6',
     entry_points = {
