@@ -11,9 +11,14 @@ import os
 import urllib
 import pathlib
 
-from tornado.netutil import bind_unix_socket
-from tornado.escape import url_escape
+# Unix Sockets not available on Windows. These test
+# will be skipped on Windows anyways.
+try:
+    from tornado.netutil import bind_unix_socket
+except ImportError:
+    pass
 
+from tornado.escape import url_escape
 import jupyter_server.serverapp
 from jupyter_server import DEFAULT_JUPYTER_SERVER_PORT
 from jupyter_server.utils import (
