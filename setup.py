@@ -51,9 +51,16 @@ setup_args = dict(
         "pywin32>=1.0 ; sys_platform == 'win32'",
     ],
     extras_require = {
-        'test': ['coverage', 'requests',
-                 'pytest', 'pytest-cov', 'pytest-jupyter',
-                 'pytest-console-scripts', 'ipykernel'],
+        'test': [
+            'coverage',
+            'requests',
+            'pytest',
+            'pytest-cov',
+            'pytest-jupyter',
+            'pytest-jupyter[server]',
+            'pytest-console-scripts',
+            'ipykernel'
+        ],
     },
     python_requires = '>=3.6',
     entry_points = {
