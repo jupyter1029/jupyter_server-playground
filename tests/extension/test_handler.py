@@ -75,28 +75,31 @@ async def test_handler_argv(jp_fetch, jp_argv):
 
 
 @pytest.mark.parametrize(
-    'jp_server_config',
+    'jp_server_config,jp_base_url',
     [
-        {
-            "ServerApp": {
-                "jpserver_extensions": {
-                    "tests.extension.mockextensions": True
+        (
+            {
+                "ServerApp": {
+                    "jpserver_extensions": {
+                        "tests.extension.mockextensions": True
+                    },
+                    # Move extension handlers behind a url prefix
+                    "base_url": "test_prefix"
                 },
-                # Move extension handlers behind a url prefix
-                "base_url": "test_prefix"
+                "MockExtensionApp": {
+                    # Change a trait in the MockExtensionApp using
+                    # the following config value.
+                    "mock_trait": "test mock trait"
+                }
             },
-            "MockExtensionApp": {
-                # Change a trait in the MockExtensionApp using
-                # the following config value.
-                "mock_trait": "test mock trait"
-            }
-        }
+            '/test_prefix/'
+        )
     ]
 )
-async def test_base_url(jp_fetch, jp_server_config):
+async def test_base_url(jp_fetch, jp_server_config, jp_base_url):
     # Test that the extension's handlers were properly prefixed
     r = await jp_fetch(
-        'test_prefix', 'mock',
+        'mock',
         method='GET'
     )
     assert r.code == 200
@@ -104,7 +107,6 @@ async def test_base_url(jp_fetch, jp_server_config):
 
     # Test that the static namespace was prefixed by base_url
     r = await jp_fetch(
-        'test_prefix',
         'static', 'mockextension', 'mock.txt',
         method='GET'
     )
