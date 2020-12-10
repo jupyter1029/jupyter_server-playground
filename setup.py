@@ -53,6 +53,7 @@ setup_args = dict(
     extras_require = {
         'test': ['coverage', 'requests',
                  'pytest', 'pytest-cov',
+                 'pytest-tornasync',
                  'pytest-console-scripts', 'ipykernel'],
     },
     python_requires = '>=3.6',

@@ -51,7 +51,7 @@ async def test_handler_template(jp_fetch, mock_template):
         }
     ]
 )
-async def test_handler_setting(jp_fetch):
+async def test_handler_setting(jp_fetch, jp_server_config):
     # Test that the extension trait was picked up by the webapp.
     r = await jp_fetch(
         'mock',
@@ -64,7 +64,7 @@ async def test_handler_setting(jp_fetch):
 @pytest.mark.parametrize(
     'jp_argv', (['--MockExtensionApp.mock_trait=test mock trait'],)
 )
-async def test_handler_argv(jp_fetch):
+async def test_handler_argv(jp_fetch, jp_argv):
     # Test that the extension trait was picked up by the webapp.
     r = await jp_fetch(
         'mock',
@@ -93,7 +93,7 @@ async def test_handler_argv(jp_fetch):
         }
     ]
 )
-async def test_base_url(jp_fetch):
+async def test_base_url(jp_fetch, jp_server_config):
     # Test that the extension's handlers were properly prefixed
     r = await jp_fetch(
         'test_prefix', 'mock',
