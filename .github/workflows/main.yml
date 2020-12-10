@@ -40,7 +40,6 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install the Python dependencies
       run: |
-        pip install git+https://github.com/jupyter1029/jupyter_core-playground.git@pytest_plugin
         pip install -e .[test] codecov
     - name: List installed packages
       run: |
