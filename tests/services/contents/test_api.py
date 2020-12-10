@@ -580,7 +580,7 @@ async def test_rename(jp_fetch, jp_base_url, contents, contents_dir):
     )
     fpath = path+'/'+new_name
     assert r.code == 200
-    location = jp_base_url + 'api/contents/' + fpath
+    location = url_path_join(jp_base_url, 'api/contents/', fpath)
     assert r.headers['Location'] == location
     model = json.loads(r.body.decode())
     assert model['name'] == new_name
