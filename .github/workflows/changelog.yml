@@ -11,10 +11,13 @@ on:
 
 jobs:
   job1:
+    name: Testing this job
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-ruby@v1
+    - name: Stuff 1
+      uses: actions/checkout@v2
+    - name: Stuff 2
+      uses: actions/setup-ruby@v1
     # - name: Install github changelog generator
     #   run: |
     #     gem install github_changelog_generator
