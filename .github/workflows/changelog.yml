@@ -19,11 +19,3 @@ jobs:
     - name: Install github changelog generator
       run: |
         gem install github_changelog_generator
-    - name: Generate ChangeLog
-      run: |
-        github_changelog_generator -u jupyter-server \
-        -p jupyter_server \
-        --token ${{ secrets.GITHUB_TOKEN }} \
-        --no-issues \
-        --since-tag ${{ github.event.inputs.lastVersion }} \
-        --output
