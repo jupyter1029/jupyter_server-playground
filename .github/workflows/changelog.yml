@@ -4,6 +4,8 @@ on:
     inputs:
       lastVersion:
         description: "Last Version"
+        required: true
+        default: 1.0.0
 jobs:
   runs-on: ubuntu-latest
   steps:
