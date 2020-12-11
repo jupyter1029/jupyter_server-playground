@@ -8,6 +8,7 @@ on:
         required: true
         default: '1.0.0'
 
+
 jobs:
   job1:
     runs-on: ubuntu-latest
