@@ -5,22 +5,23 @@ on:
       lastVersion:
         description: "Last Version"
         required: true
-        default: 1.0.0
+        default: '1.0.0'
 jobs:
-  runs-on: ubuntu-latest
-  steps:
-  - uses: actions/checkout@v2
-  - uses: actions/setup-ruby@v1
-    with:
-      ruby-version: '2.6' # Version range or exact version of a Ruby version to use, using semvers version range syntax.
-  - name: Install github changelog generator
-    run: |
-      gem install github_changelog_generator
-  - name: Generate ChangeLog
-    run: |
-      github_changelog_generator -u jupyter-server \
-      -p jupyter_server \
-      --token ${{ secrets.GITHUB_TOKEN }} \
-      --no-issues \
-      --since-tag ${{ github.event.inputs.lastVersion }} \
-      --output
+  main:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-ruby@v1
+      with:
+        ruby-version: '2.6' # Version range or exact version of a Ruby version to use, using semvers version range syntax.
+    - name: Install github changelog generator
+      run: |
+        gem install github_changelog_generator
+    - name: Generate ChangeLog
+      run: |
+        github_changelog_generator -u jupyter-server \
+        -p jupyter_server \
+        --token ${{ secrets.GITHUB_TOKEN }} \
+        --no-issues \
+        --since-tag ${{ github.event.inputs.lastVersion }} \
+        --output
