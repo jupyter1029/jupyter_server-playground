@@ -39,6 +39,7 @@ setup_args = dict(
         'jinja2',
         'tornado>=6.1.0',
         'pyzmq>=17',
+        'ipython==7.16.1',
         'ipython_genutils',
         'traitlets>=4.2.1',
         'jupyter_core>=4.4.0',
