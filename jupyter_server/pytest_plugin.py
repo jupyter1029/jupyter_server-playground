@@ -302,6 +302,12 @@ def jp_serverapp(
     app.remove_browser_open_file()
     app.cleanup_kernels()
 
+    kernels_still_running = True
+    while kernels_still_running:
+        running_kernels = app.kernel_manager.list_kernel_ids()
+        if len(running_kernels) == 0:
+            kernels_still_running = False
+
 
 @pytest.fixture
 def jp_web_app(jp_serverapp):
