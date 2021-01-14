@@ -41,7 +41,7 @@ setup_args = dict(
     install_requires = [
         'jinja2',
         'tornado>=6.1.0',
-        'pyzmq>=17',
+        'pyzmq<=20.0.0',
         'ipython_genutils',
         'traitlets>=4.2.1',
         'jupyter_core>=4.4.0',
