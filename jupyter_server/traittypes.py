@@ -312,7 +312,7 @@ class InstanceFromClasses(ClassBasedTraitType):
             if isinstance(klass, str):
                 result += klass
             else:
-                result += f"{klass.__class__.__name__}"
+                result += describe("a", klass)
             result += " or "
         result = result.strip(" or ")
         if self.allow_none:

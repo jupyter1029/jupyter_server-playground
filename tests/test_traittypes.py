@@ -29,6 +29,7 @@ class Thing(HasTraits):
     )
 
     b = TypeFromClasses(
+        default_value=None,
         allow_none=True,
         klasses=[
             DummyClass,
