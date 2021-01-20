@@ -1,6 +1,12 @@
 import inspect
 from traitlets import ClassBasedTraitType, Undefined, warn
 
+# Traitlet's 5.x includes a set of utilities for building
+# description strings for objects. Traitlets 5.x does not
+# support Python 3.6, but jupyter_server does; instead
+# jupyter_server uses traitlets 4.3.x which doesn't have
+# this `descriptions` submodule. This chunk in the except
+# clause is a copy-and-paste from traitlets 5.0.5.
 try:
     from traitlets.utils.descriptions import describe
 except ImportError:
@@ -306,7 +312,7 @@ class InstanceFromClasses(ClassBasedTraitType):
             if isinstance(klass, str):
                 result += klass
             else:
-                result += f"{klass.__class__.__name__}""
+                result += f"{klass.__class__.__name__}"
             result += " or "
         result = result.strip(" or ")
         if self.allow_none:
