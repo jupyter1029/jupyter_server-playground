@@ -232,7 +232,7 @@ class TypeFromClasses(ClassBasedTraitType):
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
                 except:
-                    warn(f"{klass} is not importable. Is it installed?")
+                    warn(f"{klass} is not importable. Is it installed?", ImportWarning)
             else:
                 self.importable_klasses.append(klass)
 
@@ -332,7 +332,7 @@ class InstanceFromClasses(ClassBasedTraitType):
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
                 except:
-                    warn(f"{klass} is not importable. Is it installed?")
+                    warn(f"{klass} is not importable. Is it installed?", ImportWarning)
             else:
                 self.importable_klasses.append(klass)
 
