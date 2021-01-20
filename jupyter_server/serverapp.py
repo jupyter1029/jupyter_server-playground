@@ -106,6 +106,7 @@ from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 from jupyter_server.extension.serverextension import ServerExtensionApp
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.config import ExtensionConfigManager
+from jupyter_server.traittypes import TypeFromClasses
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -1134,9 +1135,12 @@ class ServerApp(JupyterApp):
         help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons."""
     )
 
-    contents_manager_class = Type(
+    contents_manager_class = TypeFromClasses(
         default_value=LargeFileManager,
-        klass=ContentsManager,
+        klasses=[
+            'jupyter_server.services.contents.manager.ContentsManager',
+            'notebook.services.contents.manager.ContentsManager'
+        ],
         config=True,
         help=_('The content manager class to use.')
     )
