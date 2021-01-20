@@ -73,7 +73,7 @@ class TestTypeFromClasses:
 
     @pytest.mark.parametrize(
         'value',
-        [float, object, ]
+        [float, object]
     )
     def test_bad_values(self, value):
         with pytest.raises(TraitError) as e:
