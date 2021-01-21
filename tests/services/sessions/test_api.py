@@ -101,7 +101,7 @@ class SessionClient:
     async def cleanup(self):
         resp = await self.list()
         sessions = j(resp)
-        print(sessions)
+        print(f"\nNew Session Created:{sessions}\n")
         for session in sessions:
             await self.delete(session['id'])
         time.sleep(0.1)
