@@ -58,7 +58,9 @@ class SessionClient:
                 'id': kernel_id
             }
         }
-        return await self._req(method='POST', body=body)
+        resp = await self._req(method='POST', body=body)
+        print(f"\nNew Session Created:{j(resp)}\n")
+        return resp
 
     def create_deprecated(self, path):
         body = {
@@ -99,6 +101,7 @@ class SessionClient:
     async def cleanup(self):
         resp = await self.list()
         sessions = j(resp)
+        print(sessions)
         for session in sessions:
             await self.delete(session['id'])
         time.sleep(0.1)

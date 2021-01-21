@@ -44,7 +44,7 @@ jobs:
         pip check
     - name: Run the tests
       run: |
-        pytest -vv tests/services/sessions/test_api.py
+        pytest -s tests/services/sessions/
     - name: Install the Python dependencies for the examples
       run: |
         cd examples/simple && pip install -e .
