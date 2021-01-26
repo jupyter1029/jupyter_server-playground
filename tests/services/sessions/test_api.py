@@ -40,7 +40,7 @@ class SessionClient:
 
     async def list(self):
         resp = await self._req(method='GET')
-        print(f"\n\nSession List:{j(resp)}\n")
+        #print(f"\n\nSession List:{j(resp)}\n")
         return resp
 
     async def get(self, id):
@@ -61,7 +61,7 @@ class SessionClient:
             }
         }
         resp = await self._req(method='POST', body=body)
-        print(f"\n\nNew Session Created:{j(resp)}\n")
+        #print(f"\n\nNew Session Created:{j(resp)}\n")
         return resp
 
     def create_deprecated(self, path):
