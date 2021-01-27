@@ -190,7 +190,6 @@ async def test_kernel_handler(jp_fetch):
 
 
 async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
-    print('hello')
     # Create kernel
     r = await jp_fetch(
         'api', 'kernels',
