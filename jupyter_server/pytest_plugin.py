@@ -301,6 +301,8 @@ def jp_serverapp(
     app.remove_server_info_file()
     app.remove_browser_open_file()
     app.cleanup_kernels()
+    import time
+    time.sleep(1)
 
 
 @pytest.fixture
