@@ -297,7 +297,7 @@ def _try_binding_ports(ports, attempts=5):
         # Try binding a socket to any previously used ports.
         for port in ports:
             try:
-                server_address = ('localhost', ports)
+                server_address = ('localhost', port)
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.bind(server_address)
                 sock.shutdown()
