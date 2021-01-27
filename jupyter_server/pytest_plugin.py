@@ -300,7 +300,7 @@ def _try_binding_ports(ports, attempts=5):
                 server_address = ('localhost', port)
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.bind(server_address)
-                sock.shutdown()
+                sock.shutdown(socket.SHUT_RDWR)
                 sock.close()
             except socket.error:
                 print(f"Port {port} might still be running")
