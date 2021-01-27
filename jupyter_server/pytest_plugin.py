@@ -290,6 +290,7 @@ def jp_ensure_app_fixture(request):
 
 
 def _try_binding_ports(ports, attempts=5):
+    import time
     print("Attempting to verify that all ports are closed.")
     # Initialize a temporarily stored list for running ports.
     maybe_running_ports = []
