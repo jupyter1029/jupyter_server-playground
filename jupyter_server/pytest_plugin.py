@@ -3,6 +3,7 @@
 
 import os
 import sys
+import socket
 import json
 import pytest
 import shutil
@@ -288,6 +289,37 @@ def jp_ensure_app_fixture(request):
         request.config.option.app_fixture = "jp_web_app"
 
 
+def _try_binding_ports(ports, attempts=5):
+    print("Attempting to verify that all ports are closed.")
+    # Initialize a temporarily stored list for running ports.
+    maybe_running_ports = []
+    for i in range(attempts):
+        # Try binding a socket to any previously used ports.
+        for port in ports:
+            try:
+                server_address = ('localhost', ports)
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.bind(server_address)
+                sock.shutdown()
+                sock.close()
+            except socket.error:
+                print(f"Port {port} might still be running")
+                maybe_running_ports.append(port)
+
+        # Break out of the current loop if no running ports are found
+        if len(maybe_running_ports) == 0:
+            print("All ports are closed.")
+            return
+        # Update port list.
+        ports = maybe_running_ports[:]
+        maybe_running_ports = []
+        # Wait a second before trying again.
+        time.sleep(1.0)
+
+    print(f"Some ports were still running: {maybe_running_ports}")
+    return ports
+
+
 @pytest.fixture(scope="function")
 def jp_serverapp(
     jp_ensure_app_fixture,
@@ -298,11 +330,20 @@ def jp_serverapp(
     """Starts a Jupyter Server instance based on the established configuration values."""
     app = jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
     yield app
+
+    # Get all connected ports from all kernels
+    kernels = app.kernel_manager._kernels
+    ports = []
+    for kid, k in kernels.items():
+        ports.extend(k.ports)
+
     app.remove_server_info_file()
     app.remove_browser_open_file()
     app.cleanup_kernels()
-    import time
-    time.sleep(1)
+
+    # Try binding to previously started kernels.
+    if _try_binding_ports(ports):
+        raise Exception("Ports are still running!")
 
 
 @pytest.fixture
