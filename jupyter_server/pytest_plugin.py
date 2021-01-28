@@ -246,7 +246,7 @@ def jp_configurable_serverapp(
         token = hexlify(os.urandom(4)).decode("ascii")
         app = ServerApp.instance(
             # Set the log level to debug for testing purposes
-            #log_level='DEBUG',
+            log_level='DEBUG',
             port=http_port,
             port_retries=0,
             open_browser=False,
