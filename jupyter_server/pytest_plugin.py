@@ -137,7 +137,7 @@ def io_loop(jp_asyncio_patch):
     loop.make_current()
     yield loop
     loop.clear_current()
-    loop.close(all_fds=not sys.platform.startswith('win32'))
+    loop.close(all_fds=True)
 
 
 @pytest.fixture
