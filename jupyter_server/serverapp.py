@@ -1802,8 +1802,11 @@ class ServerApp(JupyterApp):
         # and update ServerApp config.
         super(ServerApp, self).initialize(argv)
         # Initialize all components of the ServerApp.
-        if self._dispatching:
-            return
+        if not self._dispatching:
+            self._intialize_pieces(find_extensions=find_extensions, new_httpserver=new_httpserver)
+
+    def _intialize_pieces(self, find_extensions=True, new_httpserver=True):
+        """Initialize the multiple pieces of the ServerApp."""
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
         if find_extensions:

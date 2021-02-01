@@ -186,6 +186,9 @@ class ExtensionApp(JupyterApp):
     def _default_url(self):
         return self.extension_url
 
+    # Is this linked to a serverapp yet?
+    _linked = Bool(False)
+
     # Extension can configure the ServerApp from the command-line
     classes = [
         ServerApp,
@@ -351,6 +354,10 @@ class ExtensionApp(JupyterApp):
         the command line contains traits for the ExtensionApp
         or the ExtensionApp's config files have server
         settings.
+
+        Note, the ServerApp _dispatch method has not been called
+        yet; the server's components and webapp have not been
+        initialized. Do not try to affect these pieces.
         """
         self.serverapp = serverapp
         # Load config from an ExtensionApp's config files.
@@ -370,23 +377,8 @@ class ExtensionApp(JupyterApp):
         # ServerApp, do it here.
         # i.e. ServerApp traits <--- ExtensionApp config
         self.serverapp.update_config(self.config)
-
-    @classmethod
-    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
-        """Creates an instance of ServerApp where this extension is enabled
-        (superceding disabling found in other config from files).
-
-        This is necessary when launching the ExtensionApp directly from
-        the `launch_instance` classmethod.
-        """
-        # The ExtensionApp needs to add itself as enabled extension
-        # to the jpserver_extensions trait, so that the ServerApp
-        # initializes it.
-        config = Config(cls._jupyter_server_config())
-        serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
-        cls._is_starter_app = True
-        serverapp.initialize(argv=argv, find_extensions=load_other_extensions)
-        return serverapp
+        # Acknowledge that this extension has been linked.
+        self._linked = True
 
     def initialize(self):
         """Initialize the extension app. The
@@ -440,12 +432,7 @@ class ExtensionApp(JupyterApp):
         except KeyError:
             extension = cls()
             extension._link_jupyter_server_extension(serverapp)
-        if cls._is_starter_app:
-            serverapp._starter_app = extension
         extension.initialize()
-        # Set the serverapp's default url to the extension's url.
-        if cls._is_starter_app:
-            serverapp.default_url = extension.default_url
         return extension
 
     @classmethod
@@ -479,6 +466,49 @@ class ExtensionApp(JupyterApp):
         extension.initialize()
 
     @classmethod
+    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
+        """Creates an instance of ServerApp where this extension is enabled
+        (superceding disabling found in other config from files).
+
+        This is necessary when launching the ExtensionApp directly from
+        the `launch_instance` classmethod.
+        """
+        # Prepare a server for use by this extension.
+        #   Look for any static config needed for server initialization;
+        #   i.e. the ExtensionApp needs to add itself as enabled extension
+        #   to the jpserver_extensions trait, so that the ServerApp
+        #   initializes it.
+        config = Config(cls._jupyter_server_config())
+        #   Instantiate a ServerApp.
+        serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
+        #   Use superclass to load_config by
+        #   parsing command line + reading config files.
+        super(ServerApp, serverapp).initialize(argv=argv)
+
+        # Initialize the extensions
+        #   Special case this extension, since it's the starter app.
+        extension = cls()
+        #   Link the extension (i.e. load config from everywhere).
+        extension._link_jupyter_server_extension(serverapp)
+        extension._is_starter_app = True
+
+        # Configure special-case traits in ServerApp that
+        # are needed before initializing its components.
+        #   Special case the default_url trait. Set the server to this extension's value.
+        serverapp.default_url = extension.default_url
+        serverapp._starter_app = extension
+        #   Initialize the rest of the server.
+        serverapp._intialize_pieces(find_extensions=cls.load_other_extensions)
+        #   Log if extension is blocking other extensions from loading.
+        if not cls.load_other_extensions:
+            serverapp.log.info(
+                "{ext_name} is running without loading "
+                "other extensions.".format(ext_name=cls.name)
+            )
+        return serverapp
+
+
+    @classmethod
     def launch_instance(cls, argv=None, **kwargs):
         """Launch the extension like an application. Initializes+configs a stock server
         and appends the extension to the server. Then starts the server and routes to
@@ -489,7 +519,9 @@ class ExtensionApp(JupyterApp):
             args = sys.argv[1:]  # slice out extension config.
         else:
             args = argv
-        # Check for subcommands
+
+        # Handle all "stops" that could happen before
+        # continuing to launch a server+extension.
         subapp = _preparse_for_subcommand(cls, args)
         if subapp:
             subapp.start()
@@ -498,18 +530,17 @@ class ExtensionApp(JupyterApp):
             # before initializing server to make sure these
             # arguments trigger actions from the extension not the server.
             _preparse_for_stopping_flags(cls, args)
-            # Get a jupyter server instance.
-            serverapp = cls.initialize_server(
-                argv=args,
-                load_other_extensions=cls.load_other_extensions
-            )
-            # Log if extension is blocking other extensions from loading.
-            if not cls.load_other_extensions:
-                serverapp.log.info(
-                    "{ext_name} is running without loading "
-                    "other extensions.".format(ext_name=cls.name)
-                )
-            try:
-                serverapp.start()
-            except NoStart:
-                pass
+
+        # Initialize a server with this extension set
+        # as the starter app.
+        serverapp = cls.initialize_server(
+            argv=args,
+            load_other_extensions=cls.load_other_extensions,
+            **kwargs
+        )
+
+        # Start the server.
+        try:
+            serverapp.start()
+        except NoStart:
+            pass

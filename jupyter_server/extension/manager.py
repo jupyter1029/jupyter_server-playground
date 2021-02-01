@@ -22,6 +22,7 @@ class ExtensionPoint(HasTraits):
     point defined by metadata and importable from a Python package.
     """
     metadata = Dict()
+    _linked = Bool(False)
 
     def __init__(self, *args, **kwargs):
         # Store extension points that have been linked.
@@ -54,6 +55,13 @@ class ExtensionPoint(HasTraits):
 
     @property
     def linked(self):
+        """Has this extension point been linked to the server.
+
+        Will poll from ExtensionApp's trait, if this point
+        is an instance of ExtensionApp.
+        """
+        if self.app:
+            return self.app._linked
         return self._linked
 
     @property
@@ -119,8 +127,12 @@ class ExtensionPoint(HasTraits):
         This looks for a `_link_jupyter_server_extension` function
         in the extension's module or ExtensionApp class.
         """
-        linker = self._get_linker()
-        return linker(serverapp)
+        # Only links if
+        if not self.linked:
+            linker = self._get_linker()
+            linker(serverapp)
+            # Store this extension as already linked.
+            self._linked = True
 
     def load(self, serverapp):
         """Load the extension in a Jupyter ServerApp object.
