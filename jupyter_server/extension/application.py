@@ -483,7 +483,7 @@ class ExtensionApp(JupyterApp):
         serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
         #   Use superclass to load_config by
         #   parsing command line + reading config files.
-        super(ServerApp, serverapp).initialize(argv=argv)
+        JupyterApp.initialize(serverapp, argv=argv)
 
         # Initialize the extensions
         #   Special case this extension, since it's the starter app.
