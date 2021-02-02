@@ -199,9 +199,6 @@ class ExtensionApp(JupyterApp):
 
     _log_formatter_cls = LogFormatter
 
-    # Whether this app is the starter app
-    #_is_starter_app = False
-
     @default('log_level')
     def _default_log_level(self):
         return logging.INFO
@@ -355,9 +352,9 @@ class ExtensionApp(JupyterApp):
         or the ExtensionApp's config files have server
         settings.
 
-        Note, the ServerApp _dispatch method has not been called
-        yet; the server's components and webapp have not been
-        initialized. Do not try to affect these pieces.
+        Note, the ServerApp has not initialized the Tornado
+        Web Application yet, so do not try to affect the
+        `web_app` attribute.
         """
         self.serverapp = serverapp
         # Load config from an ExtensionApp's config files.

@@ -1307,6 +1307,17 @@ class ServerApp(JupyterApp):
         config=True
     )
 
+    _starter_app = Instance(
+        default_value=None,
+        allow_none=True,
+        klass='jupyter_server.extension.application.ExtensionApp'
+    )
+
+    @property
+    def starter_app(self):
+        """Get the Extension that started this server."""
+        return self._starter_app
+
     def parse_command_line(self, argv=None):
 
         super(ServerApp, self).parse_command_line(argv)
@@ -1761,6 +1772,8 @@ class ServerApp(JupyterApp):
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super(ServerApp, self).initialize(argv=argv)
+        if self._dispatching:
+            return
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
         if find_extensions:
