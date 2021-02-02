@@ -476,7 +476,6 @@ class ExtensionApp(JupyterApp):
         This is necessary when launching the ExtensionApp directly from
         the `launch_instance` classmethod.
         """
-        print("In")
         pass
 
     @classmethod
@@ -496,16 +495,18 @@ class ExtensionApp(JupyterApp):
         subapp = _preparse_for_subcommand(cls, args)
         if subapp:
             subapp.start()
-        else:
-            # Check for help, version, and generate-config arguments
-            # before initializing server to make sure these
-            # arguments trigger actions from the extension not the server.
-            _preparse_for_stopping_flags(cls, args)
+            return
+
+        # Check for help, version, and generate-config arguments
+        # before initializing server to make sure these
+        # arguments trigger actions from the extension not the server.
+        _preparse_for_stopping_flags(cls, args)
 
         # Initialize a server with this extension set
         # as the starter app.
         serverapp = ServerApp.instance(
-            jpserver_extensions={cls.get_extension_package(): True})
+            jpserver_extensions={cls.get_extension_package(): True}, **kwargs)
+
         serverapp.initialize(
             argv=args,
             starter_extension=cls.name,
