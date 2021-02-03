@@ -464,19 +464,20 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
-        """DEPRECATED: this function does nothing. A server can be started by calling
-        launch_instance from this extension or initializing a server directly
-        and giving it a `starter_extension` argument.
-
-        This method used to...
-
-        Creates an instance of ServerApp where this extension is enabled
+        """Create an instance of ServerApp where this extension is enabled
         (superceding disabling found in other config from files).
 
         This is necessary when launching the ExtensionApp directly from
         the `launch_instance` classmethod.
         """
-        pass
+        serverapp = ServerApp.instance(
+            jpserver_extensions={cls.get_extension_package(): True}, **kwargs)
+        serverapp.initialize(
+            argv=argv,
+            starter_extension=cls.name,
+            find_extensions=cls.load_other_extensions,
+        )
+        return serverapp
 
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
@@ -502,18 +503,14 @@ class ExtensionApp(JupyterApp):
         # arguments trigger actions from the extension not the server.
         _preparse_for_stopping_flags(cls, args)
 
-        # Initialize a server with this extension set
-        # as the starter app.
-        serverapp = ServerApp.instance(
-            jpserver_extensions={cls.get_extension_package(): True}, **kwargs)
+        serverapp = cls.initialize_server(argv=args)
 
-        serverapp.initialize(
-            argv=args,
-            starter_extension=cls.name,
-            find_extensions=cls.load_other_extensions,
-            **kwargs
-        )
-
+        # Log if extension is blocking other extensions from loading.
+        if not cls.load_other_extensions:
+            serverapp.log.info(
+                "{ext_name} is running without loading "
+                "other extensions.".format(ext_name=cls.name)
+            )
         # Start the server.
         try:
             serverapp.start()

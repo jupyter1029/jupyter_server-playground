@@ -1748,17 +1748,13 @@ class ServerApp(JupyterApp):
         )
 
     @catch_config_error
-    def initialize(self, argv=None, starter_extension=None, find_extensions=True, new_httpserver=True):
+    def initialize(self, argv=None, find_extensions=True, new_httpserver=True, starter_extension=None):
         """Initialize the Server application class, configurables, web application, and http server.
 
         Parameters
         ----------
         argv: list or None
             CLI arguments to parse.
-
-        starter_extension: str
-            If given, it references the name of an extension point that started the Server.
-            We will try to load configuration from extension point
 
         find_extensions: bool
             If True, find and load extensions listed in Jupyter config paths. If False,
@@ -1768,6 +1764,10 @@ class ServerApp(JupyterApp):
         new_httpserver: bool
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
             Application. This will set the http_server attribute of this class.
+
+        starter_extension: str
+            If given, it references the name of an extension point that started the Server.
+            We will try to load configuration from extension point
         """
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.

@@ -9,9 +9,14 @@ import subprocess
 import requests
 from binascii import hexlify
 
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
 @pytest.fixture
 def port():
     return 9999
+
 
 @pytest.fixture
 def token():
@@ -23,6 +28,7 @@ def auth_header(token):
     return {
         'Authorization': 'token %s' % token
     }
+
 
 def wait_up(url, interval=0.1, check=None):
     while True:
@@ -51,13 +57,13 @@ def launch_instance(request, port, token):
 
         process = subprocess.Popen([
             sys.executable, '-m',
-            'tests.extension.mockextensions.app',
+            'mockextensions.app',
             f'--port={port}',
             '--ip=127.0.0.1',
             '--no-browser',
             f'--ServerApp.token={token}',
             *argv,
-        ], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        ], cwd=HERE)
 
         request.addfinalizer(_kill_extension_app)
         url = f'http://127.0.0.1:{port}'
@@ -85,3 +91,5 @@ def test_base_url(launch_instance, fetch):
     launch_instance(['--ServerApp.base_url=/foo'])
     r = fetch("/foo/mock")
     assert r.status_code == 200
+
+

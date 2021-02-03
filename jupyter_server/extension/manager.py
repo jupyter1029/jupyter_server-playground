@@ -56,7 +56,7 @@ class ExtensionPoint(HasTraits):
     def linked(self):
         """Has this extension point been linked to the server.
 
-        Will poll from ExtensionApp's trait, if this point
+        Will pull from ExtensionApp's trait, if this point
         is an instance of ExtensionApp.
         """
         if self.app:

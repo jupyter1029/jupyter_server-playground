@@ -1,5 +1,5 @@
 import importlib
-import pathlib
+
 
 class ExtensionLoadingError(Exception):
     pass
