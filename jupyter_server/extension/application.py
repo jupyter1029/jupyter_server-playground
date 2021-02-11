@@ -186,6 +186,8 @@ class ExtensionApp(JupyterApp):
     def _default_url(self):
         return self.extension_url
 
+    file_to_run_url = Unicode('notebooks')
+
     # Is this linked to a serverapp yet?
     _linked = Bool(False)
 
@@ -246,7 +248,6 @@ class ExtensionApp(JupyterApp):
         if not self.name:
             return ''
         return 'jupyter_{}_config'.format(self.name.replace('-','_'))
-
     def initialize_settings(self):
         """Override this method to add handling of settings."""
         pass
@@ -337,7 +338,8 @@ class ExtensionApp(JupyterApp):
         base_config = {
             "ServerApp": {
                 "default_url": self.default_url,
-                "open_browser": self.open_browser
+                "open_browser": self.open_browser,
+                "file_to_run_url": self.file_to_run_url
             }
         }
         base_config["ServerApp"].update(self.serverapp_config)

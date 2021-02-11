@@ -32,6 +32,7 @@ import warnings
 import webbrowser
 import urllib
 import inspect
+import pathlib
 
 from base64 import encodebytes
 try:
@@ -102,7 +103,14 @@ from jupyter_core.paths import jupyter_runtime_dir, jupyter_path
 from jupyter_server._sysinfo import get_sys_info
 
 from ._tz import utcnow, utcfromtimestamp
-from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
+from .utils import (
+    url_path_join,
+    check_pid,
+    url_escape,
+    urljoin,
+    pathname2url,
+    deprecated
+)
 
 from jupyter_server.extension.serverextension import ServerExtensionApp
 from jupyter_server.extension.manager import ExtensionManager
@@ -620,10 +628,15 @@ class ServerApp(JupyterApp):
         return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
 
     # file to be opened in the Jupyter server
-    file_to_run = Unicode('', config=True)
+    file_to_run = Unicode('',
+        help="Open the named file when the application is launched."
+    ).tag(config=True)
+
+    file_to_run_url = Unicode('notebooks',
+        help="The URL prefix where files are opened directly."
+    ).tag(config=True)
 
     # Network related information
-
     allow_origin = Unicode('', config=True,
         help="""Set the Access-Control-Allow-Origin header
 
@@ -1193,6 +1206,13 @@ class ServerApp(JupyterApp):
     @default('browser_open_file')
     def _default_browser_open_file(self):
         basename = "jpserver-%s-open.html" % os.getpid()
+        return os.path.join(self.runtime_dir, basename)
+
+    browser_open_file_to_run = Unicode()
+
+    @default('browser_open_file_to_run')
+    def _default_browser_open_file_to_run(self):
+        basename = "jpserver-file-to-run-%s-open.html" % os.getpid()
         return os.path.join(self.runtime_dir, basename)
 
     pylab = Unicode('disabled', config=True,
@@ -1874,18 +1894,90 @@ class ServerApp(JupyterApp):
             os.unlink(self.info_file)
         except OSError as e:
             if e.errno != errno.ENOENT:
-                raise
+                raise;
 
-    def write_browser_open_file(self):
-        """Write an nbserver-<pid>-open.html file
+    def _resolve_file_to_run_with_root_dir(self):
+        """Returns a relative path from file_to_run
+        to root_dir. If root_dir and file_to_run
+        are incompatible, i.e. on different subtrees,
+        crash the app and log a critical message. Note
+        that if root_dir is not configured and file_to_run
+        is configured, root_dir will be set to the parent
+        directory of file to run.
 
-        This can be used to open the notebook in a browser
+        It is initially assumed if file_to_run is a
+        relative path, it is relative to the current working
+        directory and root_dir is a subtree of the current
+        working directory.
+
+        If root_dir is not a subtree, this method will
+        check if file_to_run exists relative to root_dir's
+        subtree and return a relative path there if the
+        path exists.
+
+        Otherwise, this method will raise a informative critical
+        log message describing the issue.
         """
-        # default_url contains base_url, but so does connection_url
-        open_url = self.default_url[len(self.base_url):]
+        rootdir_abspath = pathlib.Path(self.root_dir).resolve()
 
-        with open(self.browser_open_file, 'w', encoding='utf-8') as f:
-            self._write_browser_open_file(open_url, f)
+        # Absolute paths are easy. Just check that root_dir is
+        # a subpath of file_to_run's absolute path.
+        if os.path.isabs(self.file_to_run):
+            file_abspath = pathlib.Path(self.file_to_run)
+            # If the file's path does not share root_dir as a
+            # subpath, throw a critical warning and crash the app.
+            # The server will not be able to resolve files
+            # in different subtrees of the underlying file system.
+            if not file_abspath.is_relative_to(rootdir_abspath):
+                self.log.critical(
+                    "`root_dir` and `file_to_run` are incompatible. They "
+                    "don't share the same subtrees. Make sure `file_to_run` "
+                    "is on the same path as `root_dir`."
+                )
+                self.exit(1)
+            # Return a relative path for the server to
+            file_relpath = os.path.relpath(file_abspath, rootdir_abspath)
+            return str(file_relpath)
+
+
+        # In the case of a relative path, try building a relative
+        # path from file_to_run and root_dir.
+        file_relpath = pathlib.Path(self.file_to_run)
+        file_abspath = pathlib.Path(self.file_to_run).resolve()
+        if file_abspath.is_relative_to(rootdir_abspath):
+            file_relpath = os.path.relpath(file_abspath, rootdir_abspath)
+            # Inform the user if the file_to_run path needed to be updated.
+            if str(file_relpath) != str(self.file_to_run):
+                self.log.debug(
+                    "The server's `root_dir` is a subpath of the current "
+                    "working directory. The `file_to_run`'s path was adjusted "
+                    "to work from `root_dir`."
+                )
+            return str(file_relpath)
+
+        # If no relative path can be found, try joining the file_to_run
+        # and root_dir and see if the file exists relative to root_dir.
+        if rootdir_abspath.joinpath(file_relpath).exists():
+            self.log.debug(
+                f"{self.file_to_run} was found relative to the `root_dir`, so it's "
+                "assumed that this is the correct `file_to_run`."
+            )
+            return str(file_relpath)
+
+        if file_relpath.exists():
+            self.log.critical(
+                "The `root_dir` and `file_to_run` traits are incompatible. "
+                "`file_to_run` was found relative to the server's current "
+                "working directory, but `root_dir` is not a subtree of the "
+                "current working directory."
+            )
+            self.exit(1)
+
+        self.log.critical(
+            f"The file {self.file_to_run} could not be found in the current "
+            "working directory or relative to `root_dir`."
+        )
+        self.exit(1)
 
     def _write_browser_open_file(self, url, fh):
         if self.token:
@@ -1896,8 +1988,53 @@ class ServerApp(JupyterApp):
         template = jinja2_env.get_template('browser-open.html')
         fh.write(template.render(open_url=url, base_url=self.base_url))
 
+    def write_browser_open_files(self):
+        """Write an `browser_open_file` and `browser_open_file_to_run` files
+
+        This can be used to open a file directly in a browser.
+        """
+        # default_url contains base_url, but so does connection_url
+        self.write_browser_open_file()
+
+        # Create a second browser open file if
+        # file_to_run is set.
+        if self.file_to_run:
+            # Make sure file_to_run and root_dir are compatible.
+            file_to_run_relpath = self._resolve_file_to_run_with_root_dir()
+
+            file_open_url = url_escape(
+                url_path_join(self.file_to_run_url, *file_to_run_relpath.split(os.sep))
+            )
+
+            with open(self.browser_open_file_to_run, 'w', encoding='utf-8') as f:
+                self._write_browser_open_file(file_open_url, f)
+
+    def write_browser_open_file(self):
+        """Write an jpserver-<pid>-open.html file
+
+        This can be used to open the notebook in a browser
+        """
+        # default_url contains base_url, but so does connection_url
+        open_url = self.default_url[len(self.base_url):]
+
+        with open(self.browser_open_file, 'w', encoding='utf-8') as f:
+            self._write_browser_open_file(open_url, f)
+
+    def remove_browser_open_files(self):
+        """Remove the `browser_open_file` and `browser_open_file_to_run` files
+        created for this server.
+
+        Ignores the error raised when the file has already been removed.
+        """
+        self.remove_browser_open_file()
+        try:
+            os.unlink(self.browser_open_file_to_run)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raises
+
     def remove_browser_open_file(self):
-        """Remove the nbserver-<pid>-open.html file created for this server.
+        """Remove the jpserver-<pid>-open.html file created for this server.
 
         Ignores the error raised when the file has already been removed.
         """
@@ -1906,6 +2043,28 @@ class ServerApp(JupyterApp):
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
+
+    def _prepare_browser_open(self):
+        if not self.use_redirect_file:
+            uri = self.default_url[len(self.base_url):]
+
+            if self.token:
+                uri = url_concat(uri, {'token': self.token})
+
+        if self.file_to_run:
+            # Create a separate, temporary open-browser-file
+            # pointing at a specific file.
+            open_file = self.browser_open_file_to_run
+        else:
+            # otherwise, just return the usual open browser file.
+            open_file = self.browser_open_file
+
+        if self.use_redirect_file:
+            assembled_url = urljoin('file:', pathname2url(open_file))
+        else:
+            assembled_url = url_path_join(self.connection_url, uri)
+
+        return assembled_url, open_file
 
     def launch_browser(self):
         try:
@@ -1917,31 +2076,7 @@ class ServerApp(JupyterApp):
         if not browser:
             return
 
-        if not self.use_redirect_file:
-            uri = self.default_url[len(self.base_url):]
-
-            if self.token:
-                uri = url_concat(uri, {'token': self.token})
-
-        if self.file_to_run:
-            if not os.path.exists(self.file_to_run):
-                self.log.critical(_("%s does not exist") % self.file_to_run)
-                self.exit(1)
-
-            relpath = os.path.relpath(self.file_to_run, self.root_dir)
-            uri = url_escape(url_path_join('notebooks', *relpath.split(os.sep)))
-
-            # Write a temporary file to open in the browser
-            fd, open_file = tempfile.mkstemp(suffix='.html')
-            with open(fd, 'w', encoding='utf-8') as fh:
-                self._write_browser_open_file(uri, fh)
-        else:
-            open_file = self.browser_open_file
-
-        if self.use_redirect_file:
-            assembled_url = urljoin('file:', pathname2url(open_file))
-        else:
-            assembled_url = url_path_join(self.connection_url, uri)
+        assembled_url, _ = self._prepare_browser_open()
 
         b = lambda: browser.open(assembled_url, new=self.webbrowser_open_new)
         threading.Thread(target=b).start()
@@ -1970,7 +2105,7 @@ class ServerApp(JupyterApp):
                  "resources section at https://jupyter.org/community.html."))
 
         self.write_server_info_file()
-        self.write_browser_open_file()
+        self.write_browser_open_files()
 
         # Handle the browser opening.
         if self.open_browser:
@@ -1987,6 +2122,14 @@ class ServerApp(JupyterApp):
                 '    %s' % self.display_url,
             ]))
 
+    def _cleanup(self):
+        """General cleanup of files and kernels created
+        by this instance ServerApp.
+        """
+        self.remove_server_info_file()
+        self.remove_browser_open_files()
+        self.cleanup_kernels()
+
     def start_ioloop(self):
         """Start the IO Loop."""
         self.io_loop = ioloop.IOLoop.current()
@@ -2000,9 +2143,7 @@ class ServerApp(JupyterApp):
         except KeyboardInterrupt:
             self.log.info(_("Interrupted..."))
         finally:
-            self.remove_server_info_file()
-            self.remove_browser_open_file()
-            self.cleanup_kernels()
+            self._cleanup()
 
     def start(self):
         """ Start the Jupyter server app, after initialization

@@ -1,5 +1,6 @@
 import os
 import getpass
+import pathlib
 import pytest
 import logging
 from unittest.mock import patch
@@ -7,6 +8,7 @@ from unittest.mock import patch
 from traitlets import TraitError
 from traitlets.tests.utils import check_help_all_output
 from jupyter_core.application import NoStart
+import nbformat
 
 from jupyter_server.serverapp import (
     ServerApp,
@@ -117,3 +119,141 @@ def test_list_running_servers(jp_serverapp, jp_web_app):
     servers = list(list_running_servers(jp_serverapp.runtime_dir))
     assert len(servers) >= 1
 
+
+FILE_TO_RUN = "TemporaryNotebook.ipynb"
+
+
+def tmp_notebook(nbpath):
+    nbpath = pathlib.Path(nbpath)
+    # Check that the notebook has the correct file extension.
+    if nbpath.suffix != '.ipynb':
+        raise Exception("File extension for notebook must be .ipynb")
+    # If the notebook path has a parent directory, make sure it's created.
+    parent = nbpath.parent
+    parent.mkdir(parents=True, exist_ok=True)
+    # Create a notebook string and write to file.
+    nb = nbformat.v4.new_notebook()
+    nbtext = nbformat.writes(nb, version=4)
+    nbpath.write_text(nbtext)
+    return nbpath
+
+
+@pytest.mark.parametrize(
+    "jp_server_config,",
+    [
+        {
+            "ServerApp": {
+                "file_to_run": FILE_TO_RUN
+            }
+        }
+    ]
+)
+def test_write_browser_open_file(jp_server_config):
+
+    jp_create_notebook(FILE_TO_RUN)
+    # Verify that the browser file exists.
+    open_file = jp_serverapp.browser_open_file_to_run
+    assert os.path.exists(open_file)
+    # Check that notebook name exists in the content
+    with open(open_file, "r") as f:
+        content = f.read()
+    assert FILE_TO_RUN in content
+
+
+
+
+
+@pytest.mark.parametrize(
+    "root_dir,file_to_run,file_to_create,expected_output",
+    [
+        (
+            None,
+            'notebook.ipynb',
+            None,
+            'notebook.ipynb'
+        ),
+        (
+            None,
+            'path/to/notebook.ipynb',
+            None,
+            'notebook.ipynb'
+        ),
+        (
+            None,
+            '/path/to/notebook.ipynb',
+            None,
+            'notebook.ipynb'
+        ),
+        (
+            'jp_root_dir',
+            '/tmp_path/path/to/notebook.ipynb',
+            None,
+            SystemExit
+        ),
+        (
+            'tmp_path',
+            '/tmp_path/path/to/notebook.ipynb',
+            '/tmp_path/path/to/notebook.ipynb',
+            'path/to/notebook.ipynb'
+        ),
+        (
+            'jp_root_dir',
+            'notebook.ipynb',
+            'jp_root_dir/notebook.ipynb',
+            'notebook.ipynb'
+        ),
+        (
+            'jp_root_dir',
+            '/path/to/notebook.ipynb',
+            None,
+            SystemExit
+        ),
+        (
+            'jp_root_dir',
+            'path/to/notebook.ipynb',
+            'jp_root_dir/path/to/notebook.ipynb',
+            'path/to/notebook.ipynb'
+        ),
+    ]
+)
+def test_resolve_file_to_run_with_root_dir(
+    jp_root_dir,
+    tmp_path,
+    root_dir,
+    file_to_run,
+    file_to_create,
+    expected_output
+):
+    """Check that the
+    """
+    # Verify that the Singleton instance is cleared before the test runs.
+    ServerApp.clear_instance()
+    kwargs = {}
+    file_to_run = file_to_run.replace('/tmp_path', str(tmp_path))
+    # Root dir can be the jp_root_dir or tmp_path fixtures or None.
+    if root_dir:
+        root_dir = root_dir.replace('jp_root_dir', str(jp_root_dir))
+        root_dir = root_dir.replace('tmp_path', str(tmp_path))
+        kwargs["root_dir"] = root_dir
+
+    # If file_to_create is given, create a temporary notebook
+    # in that location.
+    if file_to_create:
+        file_to_create = file_to_create.replace('jp_root_dir', str(jp_root_dir))
+        file_to_create = file_to_create.replace('tmp_path', str(tmp_path))
+        tmp_notebook(file_to_create)
+
+    kwargs["file_to_run"] = file_to_run
+
+    # Create the notebook in the given location
+    serverapp = ServerApp.instance(**kwargs)
+
+    if expected_output is SystemExit:
+        with pytest.raises(SystemExit):
+            serverapp._resolve_file_to_run_with_root_dir()
+    else:
+        relpath = serverapp._resolve_file_to_run_with_root_dir()
+        assert relpath == expected_output
+
+    # Clear the singleton instance after each run.
+    ServerApp.clear_instance()

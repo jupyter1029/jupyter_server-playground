@@ -10,6 +10,8 @@ import errno
 import inspect
 import os
 import sys
+import warnings
+import functools
 from distutils.version import LooseVersion
 
 from urllib.parse import quote, unquote, urlparse, urljoin
@@ -226,3 +228,61 @@ def run_sync(maybe_async):
                 result = asyncio.ensure_future(maybe_async)
         return result
     return wrapped()
+
+
+class deprecated(object):
+    """Decorator to mark deprecated functions with warning.
+    Adapted from <http://wiki.python.org/moin/PythonDecoratorLibrary>.
+
+    Borrowed from scikit-image: https://github.com/scikit-image/scikit-image/blob/2673d491da1d1805a8dd20eff747ec5543205745/skimage/_shared/utils.py#L160
+
+    Parameters
+    ----------
+    alt_func : str
+        If given, tell user what function to use instead.
+    behavior : {'warn', 'raise'}
+        Behavior during call to deprecated function: 'warn' = warn user that
+        function is deprecated; 'raise' = raise error.
+    removed_version : str
+        The package version in which the deprecated function will be removed.
+    """
+
+    def __init__(self, alt_func=None, behavior='warn', removed_version=None):
+        self.alt_func = alt_func
+        self.behavior = behavior
+        self.removed_version = removed_version
+
+    def __call__(self, func):
+
+        alt_msg = ''
+        if self.alt_func is not None:
+            alt_msg = ' Use ``%s`` instead.' % self.alt_func
+        rmv_msg = ''
+        if self.removed_version is not None:
+            rmv_msg = (' and will be removed in version %s' %
+                       self.removed_version)
+
+        msg = ('Function ``%s`` is deprecated' % func.__name__ +
+               rmv_msg + '.' + alt_msg)
+
+        @functools.wraps(func)
+        def wrapped(*args, **kwargs):
+            if self.behavior == 'warn':
+                func_code = func.__code__
+                warnings.simplefilter('always', DeprecationWarning)
+                warnings.warn_explicit(msg,
+                                       category=DeprecationWarning,
+                                       filename=func_code.co_filename,
+                                       lineno=func_code.co_firstlineno + 1)
+            elif self.behavior == 'raise':
+                raise DeprecationWarning(msg)
+            return func(*args, **kwargs)
+
+        # modify doc string to display deprecation warning
+        doc = '**Deprecated function**.' + alt_msg
+        if wrapped.__doc__ is None:
+            wrapped.__doc__ = doc
+        else:
+            wrapped.__doc__ = doc + '\n\n    ' + wrapped.__doc__
+
+        return wrapped

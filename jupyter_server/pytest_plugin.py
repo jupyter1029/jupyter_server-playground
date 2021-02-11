@@ -278,10 +278,7 @@ def jp_serverapp(
     """Starts a Jupyter Server instance based on the established configuration values."""
     app = jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
     yield app
-    app.remove_server_info_file()
-    app.remove_browser_open_file()
-    app.cleanup_kernels()
-
+    app._cleanup()
 
 @pytest.fixture
 def jp_web_app(jp_serverapp):
@@ -415,8 +412,8 @@ def jp_large_contents_manager(tmp_path):
 @pytest.fixture
 def jp_create_notebook(jp_root_dir):
     """Creates a notebook in the test's home directory."""
-    def inner(nbpath):
-        nbpath = jp_root_dir.joinpath(nbpath)
+    def inner(nbpath, root_dir=jp_root_dir):
+        nbpath = root_dir.joinpath(nbpath)
         # Check that the notebook has the correct file extension.
         if nbpath.suffix != '.ipynb':
             raise Exception("File extension for notebook must be .ipynb")
@@ -427,4 +424,5 @@ def jp_create_notebook(jp_root_dir):
         nb = nbformat.v4.new_notebook()
         nbtext = nbformat.writes(nb, version=4)
         nbpath.write_text(nbtext)
+        return nbpath
     return inner
