@@ -120,9 +120,6 @@ def test_list_running_servers(jp_serverapp, jp_web_app):
     assert len(servers) >= 1
 
 
-FILE_TO_RUN = "TemporaryNotebook.ipynb"
-
-
 def tmp_notebook(nbpath):
     nbpath = pathlib.Path(nbpath)
     # Check that the notebook has the correct file extension.
@@ -136,31 +133,6 @@ def tmp_notebook(nbpath):
     nbtext = nbformat.writes(nb, version=4)
     nbpath.write_text(nbtext)
     return nbpath
-
-
-@pytest.mark.parametrize(
-    "jp_server_config,",
-    [
-        {
-            "ServerApp": {
-                "file_to_run": FILE_TO_RUN
-            }
-        }
-    ]
-)
-def test_write_browser_open_file(jp_server_config):
-
-    jp_create_notebook(FILE_TO_RUN)
-    # Verify that the browser file exists.
-    open_file = jp_serverapp.browser_open_file_to_run
-    assert os.path.exists(open_file)
-    # Check that notebook name exists in the content
-    with open(open_file, "r") as f:
-        content = f.read()
-    assert FILE_TO_RUN in content
-
-
-
 
 
 @pytest.mark.parametrize(

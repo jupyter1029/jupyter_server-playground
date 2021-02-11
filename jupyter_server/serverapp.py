@@ -108,8 +108,7 @@ from .utils import (
     check_pid,
     url_escape,
     urljoin,
-    pathname2url,
-    deprecated
+    pathname2url
 )
 
 from jupyter_server.extension.serverextension import ServerExtensionApp
