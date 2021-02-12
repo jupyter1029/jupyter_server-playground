@@ -144,9 +144,9 @@ def prefix_path(jp_root_dir, tmp_path):
     Returns a pathlib Path object.
     """
     def _inner(path):
-        path = pathlib.Path(path)
+        path = pathlib.PurePath(path)
         if not path.is_absolute():
-            return pathlib.Path(path)
+            return pathlib.PurePath(path)
         if path.parts[1] == 'jp_root_dir':
             path = jp_root_dir.joinpath(*path.parts[2:])
         elif path.parts[1] == 'tmp_path':
@@ -156,42 +156,36 @@ def prefix_path(jp_root_dir, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "root_dir,file_to_run,file_to_create,expected_output",
+    "root_dir,file_to_run,expected_output",
     [
         (
             None,
             'notebook.ipynb',
-            None,
             'notebook.ipynb'
         ),
         (
             None,
-            '/tmp_path/path/to/notebook.ipynb',
             '/tmp_path/path/to/notebook.ipynb',
             'notebook.ipynb'
         ),
         (
             '/jp_root_dir',
-            '/tmp_path/path/to/notebook.ipynb',
             '/tmp_path/path/to/notebook.ipynb',
             SystemExit
         ),
         (
             '/tmp_path',
             '/tmp_path/path/to/notebook.ipynb',
-            '/tmp_path/path/to/notebook.ipynb',
             'path/to/notebook.ipynb'
         ),
         (
             '/jp_root_dir',
             'notebook.ipynb',
-            '/jp_root_dir/notebook.ipynb',
             'notebook.ipynb'
         ),
         (
             '/jp_root_dir',
             'path/to/notebook.ipynb',
-            '/jp_root_dir/path/to/notebook.ipynb',
             'path/to/notebook.ipynb'
         ),
     ]
@@ -200,7 +194,6 @@ def test_resolve_file_to_run_with_root_dir(
     prefix_path,
     root_dir,
     file_to_run,
-    file_to_create,
     expected_output
 ):
     """Check that the
@@ -215,8 +208,8 @@ def test_resolve_file_to_run_with_root_dir(
 
     # If file_to_create is given, create a temporary notebook
     # in that location.
-    if file_to_create:
-        tmp_notebook(prefix_path(file_to_create))
+    # if file_to_create:
+    #     tmp_notebook(prefix_path(file_to_create))
 
     kwargs["file_to_run"] = str(file_to_run)
 
