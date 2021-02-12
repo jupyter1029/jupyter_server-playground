@@ -1273,7 +1273,7 @@ class ServerApp(JupyterApp):
             # If we receive a non-absolute path, make it absolute.
             value = os.path.abspath(value)
         if not os.path.isdir(value):
-            raise TraitError(trans.gettext("No such notebook dir: '%r'") % value)
+            raise TraitError(trans.gettext("No such directory: '%r'") % value)
         return value
 
     @observe('root_dir')
