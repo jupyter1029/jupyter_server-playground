@@ -1918,28 +1918,26 @@ class ServerApp(JupyterApp):
         log message describing the issue and exit.
         """
         rootdir_abspath = pathlib.Path(self.root_dir).resolve()
-
+        file_relpath = pathlib.Path(self.file_to_run)
+        relpath = os.path.relpath(file_relpath, rootdir_abspath)
         # Absolute paths are easy. Just check that root_dir is
         # a subpath of file_to_run's absolute path.
-        if os.path.isabs(self.file_to_run):
-            file_abspath = pathlib.Path(self.file_to_run)
+        if file_relpath.is_absolute():
             # If the file's path does not share root_dir as a
             # subpath, raise a critical warning and crash the app.
             # The server will not be able to resolve files
             # in different subtrees of the underlying file system.
-            if not file_abspath.is_relative_to(rootdir_abspath):
+            if '..' in relpath:
                 self.log.critical(
                     "`root_dir` and `file_to_run` are incompatible. They "
                     "don't share the same subtrees. Make sure `file_to_run` "
                     "is on the same path as `root_dir`."
                 )
                 self.exit(1)
-            file_relpath = os.path.relpath(file_abspath, rootdir_abspath)
-            return str(file_relpath)
+            return str(relpath)
 
         # In file_to_run looks like a relative path, try adjusting this
         # path to be relative to root_dir.
-        file_relpath = pathlib.Path(self.file_to_run)
         file_abspath = pathlib.Path(self.file_to_run).resolve()
         relpath = os.path.relpath(file_abspath, rootdir_abspath)
         # If root_dir is a subpath of file_to_run, .. will not be found
