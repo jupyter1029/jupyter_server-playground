@@ -1903,76 +1903,26 @@ class ServerApp(JupyterApp):
         that if root_dir is not configured and file_to_run
         is configured, root_dir will be set to the parent
         directory of file_to_run.
-
-        It is initially assumed that if file_to_run is a
-        relative path, it is relative to the current working
-        directory and root_dir is a subtree of the current
-        working directory.
-
-        If root_dir is not a subtree, this method will
-        check if file_to_run exists relative to root_dir's
-        subtree and return a relative path there if the
-        path exists.
-
-        Otherwise, this method will raise a critical
-        log message describing the issue and exit.
         """
         rootdir_abspath = pathlib.Path(self.root_dir).resolve()
-        file_relpath = pathlib.Path(self.file_to_run)
-        relpath = os.path.relpath(file_relpath, rootdir_abspath)
-        # Absolute paths are easy. Just check that root_dir is
-        # a subpath of file_to_run's absolute path.
-        if file_relpath.is_absolute():
-            # If the file's path does not share root_dir as a
-            # subpath, raise a critical warning and crash the app.
-            # The server will not be able to resolve files
-            # in different subtrees of the underlying file system.
-            if '..' in relpath:
-                self.log.critical(
-                    "`root_dir` and `file_to_run` are incompatible. They "
-                    "don't share the same subtrees. Make sure `file_to_run` "
-                    "is on the same path as `root_dir`."
-                )
-                self.exit(1)
-            return str(relpath)
+        file_rawpath = pathlib.Path(self.file_to_run)
+        combined_path = (rootdir_abspath / file_rawpath).resolve()
+        is_child = str(combined_path).startswith(str(rootdir_abspath))
 
-        # In file_to_run looks like a relative path, try adjusting this
-        # path to be relative to root_dir.
-        file_abspath = pathlib.Path(self.file_to_run).resolve()
-        relpath = os.path.relpath(file_abspath, rootdir_abspath)
-        # If root_dir is a subpath of file_to_run, .. will not be found
-        # in the relative path.
-        if '..' not in relpath:
-            # Inform the user if the file_to_run path needed to be updated.
-            if str(relpath) != str(self.file_to_run):
+        if is_child:
+            if combined_path.parent != rootdir_abspath:
                 self.log.debug(
-                    "The server's `root_dir` is a subpath of the current "
-                    "working directory. The `file_to_run`'s path was adjusted "
-                    "to work from `root_dir`."
+                    "The `root_dir` trait is set to a directory that's not "
+                    "the immediate parent directory of `file_to_run`. Note that "
+                    "the server will start at `root_dir` and open the "
+                    "the file from the relative path to the `root_dir`."
                 )
-            return str(relpath)
-
-        # If no relative path can be found, try joining the file_to_run
-        # and root_dir and see if the file exists relative to root_dir.
-        if rootdir_abspath.joinpath(file_relpath).exists():
-            self.log.debug(
-                f"{self.file_to_run} was found relative to the `root_dir`, so it's "
-                "assumed that this is the correct `file_to_run`."
-            )
-            return str(file_relpath)
-
-        if file_relpath.exists():
-            self.log.critical(
-                "The `root_dir` and `file_to_run` traits are incompatible. "
-                "`file_to_run` was found relative to the server's current "
-                "working directory, but `root_dir` is not a subtree of the "
-                "current working directory."
-            )
-            self.exit(1)
+            return str(combined_path.relative_to(rootdir_abspath))
 
         self.log.critical(
-            f"The file {self.file_to_run} could not be found in the current "
-            "working directory or relative to `root_dir`."
+            "`root_dir` and `file_to_run` are incompatible. They "
+            "don't share the same subtrees. Make sure `file_to_run` "
+            "is on the same path as `root_dir`."
         )
         self.exit(1)
 
