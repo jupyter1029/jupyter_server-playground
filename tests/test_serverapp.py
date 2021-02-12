@@ -143,15 +143,13 @@ def prefix_path(jp_root_dir, tmp_path):
 
     Returns a pathlib Path object.
     """
-    def _inner(path):
-        path = pathlib.PurePath(path)
-        if not path.is_absolute():
-            return pathlib.PurePath(path)
-        if path.parts[1] == 'jp_root_dir':
+    def _inner(rawpath):
+        path = pathlib.PurePosixPath(rawpath)
+        if rawpath.startswith('/jp_root_dir'):
             path = jp_root_dir.joinpath(*path.parts[2:])
-        elif path.parts[1] == 'tmp_path':
+        elif rawpath.startswith('/tmp_path'):
             path = tmp_path.joinpath(*path.parts[2:])
-        return path
+        return pathlib.Path(path)
     return _inner
 
 
@@ -202,14 +200,10 @@ def test_resolve_file_to_run_with_root_dir(
     ServerApp.clear_instance()
     kwargs = {}
     file_to_run = prefix_path(file_to_run)
+
     # Root dir can be the jp_root_dir or tmp_path fixtures or None.
     if root_dir:
         kwargs["root_dir"] = str(prefix_path(root_dir))
-
-    # If file_to_create is given, create a temporary notebook
-    # in that location.
-    # if file_to_create:
-    #     tmp_notebook(prefix_path(file_to_create))
 
     kwargs["file_to_run"] = str(file_to_run)
 
