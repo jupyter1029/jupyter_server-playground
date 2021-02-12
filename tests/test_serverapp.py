@@ -146,14 +146,8 @@ def tmp_notebook(nbpath):
         ),
         (
             None,
-            'path/to/notebook.ipynb',
-            None,
-            'notebook.ipynb'
-        ),
-        (
-            None,
             '/tmp_path/path/to/notebook.ipynb',
-            None,
+            '/tmp_path/path/to/notebook.ipynb',
             'notebook.ipynb'
         ),
         (
