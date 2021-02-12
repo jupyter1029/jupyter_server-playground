@@ -10,8 +10,6 @@ import errno
 import inspect
 import os
 import sys
-import warnings
-import functools
 from distutils.version import LooseVersion
 
 from urllib.parse import quote, unquote, urlparse, urljoin
