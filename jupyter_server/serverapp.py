@@ -1902,9 +1902,9 @@ class ServerApp(JupyterApp):
         crash the app and log a critical message. Note
         that if root_dir is not configured and file_to_run
         is configured, root_dir will be set to the parent
-        directory of file to run.
+        directory of file_to_run.
 
-        It is initially assumed if file_to_run is a
+        It is initially assumed that if file_to_run is a
         relative path, it is relative to the current working
         directory and root_dir is a subtree of the current
         working directory.
@@ -1914,8 +1914,8 @@ class ServerApp(JupyterApp):
         subtree and return a relative path there if the
         path exists.
 
-        Otherwise, this method will raise a informative critical
-        log message describing the issue.
+        Otherwise, this method will raise a critical
+        log message describing the issue and exit.
         """
         rootdir_abspath = pathlib.Path(self.root_dir).resolve()
 
@@ -1924,7 +1924,7 @@ class ServerApp(JupyterApp):
         if os.path.isabs(self.file_to_run):
             file_abspath = pathlib.Path(self.file_to_run)
             # If the file's path does not share root_dir as a
-            # subpath, throw a critical warning and crash the app.
+            # subpath, raise a critical warning and crash the app.
             # The server will not be able to resolve files
             # in different subtrees of the underlying file system.
             if not file_abspath.is_relative_to(rootdir_abspath):
@@ -1934,12 +1934,11 @@ class ServerApp(JupyterApp):
                     "is on the same path as `root_dir`."
                 )
                 self.exit(1)
-            # Return a relative path for the server to
             file_relpath = os.path.relpath(file_abspath, rootdir_abspath)
             return str(file_relpath)
 
-        # In the case of a relative path, try building a relative
-        # path from file_to_run and root_dir.
+        # In file_to_run looks like a relative path, try adjusting this
+        # path to be relative to root_dir.
         file_relpath = pathlib.Path(self.file_to_run)
         file_abspath = pathlib.Path(self.file_to_run).resolve()
         relpath = os.path.relpath(file_abspath, rootdir_abspath)
