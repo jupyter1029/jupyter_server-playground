@@ -1938,21 +1938,22 @@ class ServerApp(JupyterApp):
             file_relpath = os.path.relpath(file_abspath, rootdir_abspath)
             return str(file_relpath)
 
-
         # In the case of a relative path, try building a relative
         # path from file_to_run and root_dir.
         file_relpath = pathlib.Path(self.file_to_run)
         file_abspath = pathlib.Path(self.file_to_run).resolve()
-        if file_abspath.is_relative_to(rootdir_abspath):
-            file_relpath = os.path.relpath(file_abspath, rootdir_abspath)
+        relpath = os.path.relpath(file_abspath, rootdir_abspath)
+        # If root_dir is a subpath of file_to_run, .. will not be found
+        # in the relative path.
+        if '..' not in relpath:
             # Inform the user if the file_to_run path needed to be updated.
-            if str(file_relpath) != str(self.file_to_run):
+            if str(relpath) != str(self.file_to_run):
                 self.log.debug(
                     "The server's `root_dir` is a subpath of the current "
                     "working directory. The `file_to_run`'s path was adjusted "
                     "to work from `root_dir`."
                 )
-            return str(file_relpath)
+            return str(relpath)
 
         # If no relative path can be found, try joining the file_to_run
         # and root_dir and see if the file exists relative to root_dir.
