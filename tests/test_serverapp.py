@@ -153,7 +153,7 @@ def tmp_notebook(nbpath):
         (
             'jp_root_dir',
             '/tmp_path/path/to/notebook.ipynb',
-            None,
+            '/tmp_path/path/to/notebook.ipynb',
             SystemExit
         ),
         (
