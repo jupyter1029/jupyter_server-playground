@@ -135,6 +135,26 @@ def tmp_notebook(nbpath):
     return nbpath
 
 
+@pytest.fixture
+def prefix_path(jp_root_dir, tmp_path):
+    """If a given path is prefixed with the literal
+    strings `/jp_root_dir` or `/tmp_path`, replace those
+    strings with these fixtures.
+
+    Returns a pathlib Path object.
+    """
+    def _inner(path):
+        path = pathlib.Path(path)
+        if not path.is_absolute():
+            return pathlib.Path(path)
+        if path.parts[1] == 'jp_root_dir':
+            path = jp_root_dir.joinpath(*path.parts[2:])
+        elif path.parts[1] == 'tmp_path':
+            path = tmp_path.joinpath(*path.parts[2:])
+        return path
+    return _inner
+
+
 @pytest.mark.parametrize(
     "root_dir,file_to_run,file_to_create,expected_output",
     [
@@ -151,34 +171,33 @@ def tmp_notebook(nbpath):
             'notebook.ipynb'
         ),
         (
-            'jp_root_dir',
+            '/jp_root_dir',
             '/tmp_path/path/to/notebook.ipynb',
             '/tmp_path/path/to/notebook.ipynb',
             SystemExit
         ),
         (
-            'tmp_path',
+            '/tmp_path',
             '/tmp_path/path/to/notebook.ipynb',
             '/tmp_path/path/to/notebook.ipynb',
             'path/to/notebook.ipynb'
         ),
         (
-            'jp_root_dir',
+            '/jp_root_dir',
             'notebook.ipynb',
-            'jp_root_dir/notebook.ipynb',
+            '/jp_root_dir/notebook.ipynb',
             'notebook.ipynb'
         ),
         (
-            'jp_root_dir',
+            '/jp_root_dir',
             'path/to/notebook.ipynb',
-            'jp_root_dir/path/to/notebook.ipynb',
+            '/jp_root_dir/path/to/notebook.ipynb',
             'path/to/notebook.ipynb'
         ),
     ]
 )
 def test_resolve_file_to_run_with_root_dir(
-    jp_root_dir,
-    tmp_path,
+    prefix_path,
     root_dir,
     file_to_run,
     file_to_create,
@@ -189,21 +208,17 @@ def test_resolve_file_to_run_with_root_dir(
     # Verify that the Singleton instance is cleared before the test runs.
     ServerApp.clear_instance()
     kwargs = {}
-    file_to_run = file_to_run.replace('/tmp_path', str(tmp_path))
+    file_to_run = prefix_path(file_to_run)
     # Root dir can be the jp_root_dir or tmp_path fixtures or None.
     if root_dir:
-        root_dir = root_dir.replace('jp_root_dir', str(jp_root_dir))
-        root_dir = root_dir.replace('tmp_path', str(tmp_path))
-        kwargs["root_dir"] = root_dir
+        kwargs["root_dir"] = str(prefix_path(root_dir))
 
     # If file_to_create is given, create a temporary notebook
     # in that location.
     if file_to_create:
-        file_to_create = file_to_create.replace('jp_root_dir', str(jp_root_dir))
-        file_to_create = file_to_create.replace('tmp_path', str(tmp_path))
-        tmp_notebook(file_to_create)
+        tmp_notebook(prefix_path(file_to_create))
 
-    kwargs["file_to_run"] = file_to_run
+    kwargs["file_to_run"] = str(file_to_run)
 
     # Create the notebook in the given location
     serverapp = ServerApp.instance(**kwargs)
