@@ -412,8 +412,8 @@ def jp_large_contents_manager(tmp_path):
 @pytest.fixture
 def jp_create_notebook(jp_root_dir):
     """Creates a notebook in the test's home directory."""
-    def inner(nbpath, root_dir=jp_root_dir):
-        nbpath = root_dir.joinpath(nbpath)
+    def inner(nbpath):
+        nbpath = jp_root_dir.joinpath(nbpath)
         # Check that the notebook has the correct file extension.
         if nbpath.suffix != '.ipynb':
             raise Exception("File extension for notebook must be .ipynb")
@@ -424,5 +424,4 @@ def jp_create_notebook(jp_root_dir):
         nb = nbformat.v4.new_notebook()
         nbtext = nbformat.writes(nb, version=4)
         nbpath.write_text(nbtext)
-        return nbpath
     return inner

@@ -631,7 +631,7 @@ class ServerApp(JupyterApp):
         help="Open the named file when the application is launched."
     ).tag(config=True)
 
-    file_to_run_url = Unicode('notebooks',
+    file_url_prefix = Unicode('notebooks',
         help="The URL prefix where files are opened directly."
     ).tag(config=True)
 
@@ -2003,7 +2003,7 @@ class ServerApp(JupyterApp):
             file_to_run_relpath = self._resolve_file_to_run_with_root_dir()
 
             file_open_url = url_escape(
-                url_path_join(self.file_to_run_url, *file_to_run_relpath.split(os.sep))
+                url_path_join(self.file_url_prefix, *file_to_run_relpath.split(os.sep))
             )
 
             with open(self.browser_open_file_to_run, 'w', encoding='utf-8') as f:

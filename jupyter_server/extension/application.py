@@ -186,7 +186,7 @@ class ExtensionApp(JupyterApp):
     def _default_url(self):
         return self.extension_url
 
-    file_to_run_url = Unicode('notebooks')
+    file_url_prefix = Unicode('notebooks')
 
     # Is this linked to a serverapp yet?
     _linked = Bool(False)
@@ -339,7 +339,7 @@ class ExtensionApp(JupyterApp):
             "ServerApp": {
                 "default_url": self.default_url,
                 "open_browser": self.open_browser,
-                "file_to_run_url": self.file_to_run_url
+                "file_url_prefix": self.file_url_prefix
             }
         }
         base_config["ServerApp"].update(self.serverapp_config)
