@@ -228,7 +228,7 @@ def test_resolve_file_to_run_with_root_dir(
             serverapp._resolve_file_to_run_with_root_dir()
     else:
         relpath = serverapp._resolve_file_to_run_with_root_dir()
-        assert relpath == expected_output
+        assert relpath == str(pathlib.Path(expected_output))
 
     # Clear the singleton instance after each run.
     ServerApp.clear_instance()
