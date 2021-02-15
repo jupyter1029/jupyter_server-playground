@@ -249,7 +249,7 @@ class ExtensionApp(JupyterApp):
             return ''
         return 'jupyter_{}_config'.format(self.name.replace('-','_'))
 
-  def initialize_settings(self):
+    def initialize_settings(self):
         """Override this method to add handling of settings."""
         pass
 
