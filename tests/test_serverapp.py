@@ -120,21 +120,6 @@ def test_list_running_servers(jp_serverapp, jp_web_app):
     assert len(servers) >= 1
 
 
-def tmp_notebook(nbpath):
-    nbpath = pathlib.Path(nbpath)
-    # Check that the notebook has the correct file extension.
-    if nbpath.suffix != '.ipynb':
-        raise Exception("File extension for notebook must be .ipynb")
-    # If the notebook path has a parent directory, make sure it's created.
-    parent = nbpath.parent
-    parent.mkdir(parents=True, exist_ok=True)
-    # Create a notebook string and write to file.
-    nb = nbformat.v4.new_notebook()
-    nbtext = nbformat.writes(nb, version=4)
-    nbpath.write_text(nbtext)
-    return nbpath
-
-
 @pytest.fixture
 def prefix_path(jp_root_dir, tmp_path):
     """If a given path is prefixed with the literal
