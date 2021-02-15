@@ -280,6 +280,7 @@ def jp_serverapp(
     yield app
     app._cleanup()
 
+
 @pytest.fixture
 def jp_web_app(jp_serverapp):
     """app fixture is needed by pytest_tornasync plugin"""
