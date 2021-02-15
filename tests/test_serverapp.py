@@ -194,18 +194,23 @@ def test_resolve_file_to_run_with_root_dir(
     file_to_run,
     expected_output
 ):
-    """Check that the
-    """
     # Verify that the Singleton instance is cleared before the test runs.
     ServerApp.clear_instance()
-    kwargs = {}
+
+    # Setup the file_to_run path, in case the server checks
+    # if the directory exists before initializing the server.
     file_to_run = prefix_path(file_to_run)
+    if file_to_run.is_absolute():
+        file_to_run.parent.mkdir(parents=True, exist_ok=True)
+    kwargs = {"file_to_run": str(file_to_run)}
 
-    # Root dir can be the jp_root_dir or tmp_path fixtures or None.
+    # Setup the root_dir path, in case the server checks
+    # if the directory exists before initializing the server.
     if root_dir:
-        kwargs["root_dir"] = str(prefix_path(root_dir))
-
-    kwargs["file_to_run"] = str(file_to_run)
+        root_dir = prefix_path(root_dir)
+        if root_dir.is_absolute():
+            root_dir.parent.mkdir(parents=True, exist_ok=True)
+        kwargs["root_dir"] = str(root_dir)
 
     # Create the notebook in the given location
     serverapp = ServerApp.instance(**kwargs)
