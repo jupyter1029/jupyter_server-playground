@@ -1895,7 +1895,7 @@ class ServerApp(JupyterApp):
             if e.errno != errno.ENOENT:
                 raise;
 
-    def _resolve_file_to_run_with_root_dir(self):
+    def _resolve_file_to_run_and_root_dir(self):
         """Returns a relative path from file_to_run
         to root_dir. If root_dir and file_to_run
         are incompatible, i.e. on different subtrees,
@@ -1947,7 +1947,7 @@ class ServerApp(JupyterApp):
         # file_to_run is set.
         if self.file_to_run:
             # Make sure file_to_run and root_dir are compatible.
-            file_to_run_relpath = self._resolve_file_to_run_with_root_dir()
+            file_to_run_relpath = self._resolve_file_to_run_and_root_dir()
 
             file_open_url = url_escape(
                 url_path_join(self.file_url_prefix, *file_to_run_relpath.split(os.sep))

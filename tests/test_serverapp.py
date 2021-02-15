@@ -8,7 +8,6 @@ from unittest.mock import patch
 from traitlets import TraitError
 from traitlets.tests.utils import check_help_all_output
 from jupyter_core.application import NoStart
-import nbformat
 
 from jupyter_server.serverapp import (
     ServerApp,
@@ -173,7 +172,7 @@ def prefix_path(jp_root_dir, tmp_path):
         ),
     ]
 )
-def test_resolve_file_to_run_with_root_dir(
+def test_resolve_file_to_run_and_root_dir(
     prefix_path,
     root_dir,
     file_to_run,
@@ -202,9 +201,9 @@ def test_resolve_file_to_run_with_root_dir(
 
     if expected_output is SystemExit:
         with pytest.raises(SystemExit):
-            serverapp._resolve_file_to_run_with_root_dir()
+            serverapp._resolve_file_to_run_and_root_dir()
     else:
-        relpath = serverapp._resolve_file_to_run_with_root_dir()
+        relpath = serverapp._resolve_file_to_run_and_root_dir()
         assert relpath == str(pathlib.Path(expected_output))
 
     # Clear the singleton instance after each run.
