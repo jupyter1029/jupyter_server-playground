@@ -1,6 +1,5 @@
 import pytest
 from traitlets.config import Config
-from jupyter_core.application import JupyterApp
 from jupyter_server.serverapp import ServerApp
 from .mockextensions.app import MockExtensionApp
 
