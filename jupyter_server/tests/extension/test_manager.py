@@ -72,7 +72,7 @@ def test_extension_manager_api():
     }
     manager = ExtensionManager()
     manager.from_jpserver_extensions(jpserver_extensions)
-    assert len(manager.extensions) == 1
+    assert len(manager.extensions) >= 1
     assert "jupyter_server.tests.extension.mockextensions" in manager.extensions
 
 
