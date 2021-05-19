@@ -14,7 +14,7 @@ def pytest_addoption(parser):
         "--integration_tests",
         default=False,
         type=bool,
-        help="only run tests matching the environment NAME.",
+        help="only run tests with the 'integration_test' pytest mark.",
     )
 
 
