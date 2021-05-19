@@ -1,4 +1,4 @@
-name: Jupyter Server Tests [Linux]
+name: Jupyter Server Integration Tests [Linux]
 on:
   push:
     branches: 'master'
