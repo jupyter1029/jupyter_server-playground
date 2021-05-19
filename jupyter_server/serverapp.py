@@ -156,7 +156,8 @@ JUPYTER_SERVICE_HANDLERS = dict(
     view=['jupyter_server.view.handlers']
 )
 
-DEFAULT_SERVER_PORT = 8888
+# Added for backwards compatibility from classic notebook server.
+DEFAULT_SERVER_PORT = DEFAULT_JUPYTER_SERVER_PORT
 
 #-----------------------------------------------------------------------------
 # Helper functions
@@ -412,7 +413,7 @@ class JupyterPasswordApp(JupyterApp):
 
 
 def shutdown_server(server_info, timeout=5, log=None):
-    """Shutdown a notebook server in a separate process.
+    """Shutdown a Jupyter server in a separate process.
 
     *server_info* should be a dictionary as produced by list_running_servers().
 
@@ -525,7 +526,7 @@ class JupyterServerStopApp(JupyterApp):
 
 class JupyterServerListApp(JupyterApp):
     version = __version__
-    description=_i18n("List currently running notebook servers.")
+    description=_i18n("List currently running Jupyter servers.")
 
     flags = dict(
         jsonlist=({'JupyterServerListApp': {'jsonlist': True}},
@@ -536,7 +537,7 @@ class JupyterServerListApp(JupyterApp):
 
     jsonlist = Bool(False, config=True,
           help=_i18n("If True, the output will be a JSON list of objects, one per "
-                 "active notebook server, each with the details from the "
+                 "active Jupyer server, each with the details from the "
                  "relevant server info file."))
     json = Bool(False, config=True,
           help=_i18n("If True, each line of output will be a JSON object with the "
@@ -768,7 +769,7 @@ class ServerApp(JupyterApp):
 
     port = Integer(
         config=True,
-        help="The port the notebook server will listen on."
+        help=_i18n("The port the server will listen on (env: JUPYTER_PORT).")
     )
 
     @default('port')
@@ -787,7 +788,7 @@ class ServerApp(JupyterApp):
         return int(os.getenv(self.port_retries_env, self.port_retries_default_value))
 
     sock = Unicode(u'', config=True,
-        help="The UNIX socket the notebook server will listen on."
+        help="The UNIX socket the Jupyter server will listen on."
     )
 
     sock_mode = Unicode('0600', config=True,
@@ -861,7 +862,7 @@ class ServerApp(JupyterApp):
 
     def _write_cookie_secret_file(self, secret):
         """write my secret to my secret_file"""
-        self.log.info(_i18n("Writing notebook server cookie secret to %s"), self.cookie_secret_file)
+        self.log.info(_i18n("Writing Jupyter server cookie secret to %s"), self.cookie_secret_file)
         try:
             with secure_write(self.cookie_secret_file, True) as f:
                 f.write(secret)
@@ -1381,7 +1382,7 @@ class ServerApp(JupyterApp):
         self.server_extensions = change['new']
 
     jpserver_extensions = Dict({}, config=True,
-        help=(_i18n("Dict of Python modules to load as notebook server extensions."
+        help=(_i18n("Dict of Python modules to load as Jupyter server extensions."
               "Entry values can be used to enable and disable the loading of"
               "the extensions. The extensions will be loaded in alphabetical "
               "order."))
@@ -1912,7 +1913,7 @@ class ServerApp(JupyterApp):
 
         success = self._bind_http_server()
         if not success:
-            self.log.critical(_i18n('ERROR: the notebook server could not be started because '
+            self.log.critical(_i18n('ERROR: the Jupyter server could not be started because '
                               'no available port could be found.'))
             self.exit(1)
 
@@ -2362,11 +2363,11 @@ class ServerApp(JupyterApp):
 
 
 def list_running_servers(runtime_dir=None):
-    """Iterate over the server info files of running notebook servers.
+    """Iterate over the server info files of running Jupyter servers.
 
     Given a runtime directory, find jpserver-* files in the security directory,
     and yield dicts of their information, each one pertaining to
-    a currently running notebook server instance.
+    a currently running Jupyter server instance.
     """
     if runtime_dir is None:
         runtime_dir = jupyter_runtime_dir()
