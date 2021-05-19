@@ -11,7 +11,9 @@ import os
 import urllib
 import pathlib
 
-from tornado.netutil import bind_unix_socket
+if not sys.platform.startswith('win'):
+    from tornado.netutil import bind_unix_socket
+
 from tornado.escape import url_escape
 
 import jupyter_server.serverapp

@@ -1912,7 +1912,7 @@ class ServerApp(JupyterApp):
 
         success = self._bind_http_server()
         if not success:
-            self.log.critical(_('ERROR: the notebook server could not be started because '
+            self.log.critical(_i18n('ERROR: the notebook server could not be started because '
                               'no available port could be found.'))
             self.exit(1)
 
@@ -1921,7 +1921,7 @@ class ServerApp(JupyterApp):
 
     def _bind_http_server_unix(self):
         if unix_socket_in_use(self.sock):
-            self.log.warning(_('The socket %s is already in use.') % self.sock)
+            self.log.warning(_i18n('The socket %s is already in use.') % self.sock)
             return False
 
         try:
